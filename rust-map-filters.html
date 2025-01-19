@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Milan Navy - Rust Maps</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --accent-color: #ff4646;
+            --text-color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('/api/placeholder/1920/400');
+            background-size: cover;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .language-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .map-container {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .map-card {
+            background: #2a2a2a;
+            border-radius: 10px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.3s ease;
+        }
+
+        .map-card.hidden {
+            display: none;
+        }
+
+        .map-image {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1/1;
+            object-fit: cover;
+            display: block;
+        }
+
+        .map-content {
+            padding: 1.5rem;
+        }
+
+        .map-title {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        .server-ip {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+            font-family: monospace;
+            text-align: center;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: var(--accent-color);
+            border-radius: 3px;
+            margin: 0.2rem;
+            font-size: 0.8rem;
+        }
+
+        .features {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .filter-menu {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            width: 300px;
+        }
+
+        .filter-menu h3 {
+            color: #ff4646;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            color: white;
+            cursor: pointer;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .checkbox-item:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 12px;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        .checkbox-item span {
+            flex: 1;
+            line-height: 1.3;
+        }
+
+        .filter-button {
+            background: #ff4646;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .filter-button:hover {
+            background: #ff3333;
+        }
+
+        @media (max-width: 768px) {
+            .map-card {
+                margin: 1rem;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header animate__animated animate__fadeIn">
+        <button class="language-toggle" onclick="toggleLanguage()">
+            <span class="lang-it">Italiano</span>
+            <span class="lang-ru" style="display: none;">Русский</span>
+        </button>
+        <div class="logo">Cold Milan Navy</div>
+        <h2 class="lang-it">Mappa PvP</h2>
+        <h2 class="lang-ru" style="display: none;">PvP Карта</h2>
+    </header>
+
+    <main class="map-container" id="mapContainer">
+        <div class="map-card" data-features="Airfield,Junkyard,Launch Site,Military Tunnels,Nuclear Missile Silo,Powerplant,Trainyard,Ferry Terminal,Water Treatment,Sphere Tank,Bandit Town,Sewer Branch,Satellite Dish,Outpost,Excavator,Large Oilrig,Small Oilrig,Arctic Research Base A,Radtown,Military Base">
+            <img src="image/maps/1177292865.png" alt="Rust Map" class="map-image">
+            <div class="map-content">
+                <div class="server-ip">connect https://rustmaps.com/map/4500_1177292865</div>
+                <div class="map-description">
+                    <p class="lang-it">
+                        Seed: 1177292865 | Size: 4500
+                    </p>
+                    <p class="lang-ru" style="display: none;">
+                        Сид: 1177292865 | Размер: 4500
+                    </p>
+                    <div class="features">
+                        <span class="feature-tag">Airfield ✅</span>
+                        <span class="feature-tag">Junkyard ✅</span>
+                        <span class="feature-tag">Launch Site ✅</span>
+                        <span class="feature-tag">Military Tunnels ✅</span>
+                        <span class="feature-tag">Nuclear Missile Silo ✅</span>
+                        <span class="feature-tag">Powerplant ✅</span>
+                        <span class="feature-tag">Trainyard ✅</span>
+                        <span class="feature-tag">Ferry Terminal ✅</span>
+                        <span class="feature-tag">Water Treatment ✅</span>
+                        <span class="feature-tag">Sphere Tank ✅</span>
+                        <span class="feature-tag">Bandit Town ✅</span>
+                        <span class="feature-tag">Sewer Branch ✅</span>
+                        <span class="feature-tag">Satellite Dish ✅</span>
+                        <span class="feature-tag">Outpost ✅</span>
+                        <span class="feature-tag">Excavator ✅</span>
+                        <span class="feature-tag">Large Oilrig ✅</span>
+                        <span class="feature-tag">Small Oilrig ✅</span>
+                        <span class="feature-tag">Arctic Research Base A ✅</span>
+                        <span class="feature-tag">Radtown ✅</span>
+                        <span class="feature-tag">Military Base ✅</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="filter-menu">
+        <h3 class="lang-it">Filtra per caratteristiche</h3>
+        <h3 class="lang-ru" style="display: none;">Фильтр по характеристикам</h3>
+        <div class="checkbox-container">
+            <label class="checkbox-item">
+                <input type="checkbox" value="Airfield"> 
+                <span class="lang-it">Aeroporto</span>
+                <span class="lang-ru" style="display: none;">Аэропорт</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Junkyard">
+                <span class="lang-it">Discarica</span>
+                <span class="lang-ru" style="display: none;">Свалка</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Launch Site">
+                <span class="lang-it">Sito di Lancio</span>
+                <span class="lang-ru" style="display: none;">Пусковая Площадка</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Military Tunnels">
+                <span class="lang-it">Tunnel Militari</span>
+                <span class="lang-ru" style="display: none;">Военные Туннели</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Nuclear Missile Silo">
+                <span class="lang-it">Silo Missilistico Nucleare</span>
+                <span class="lang-ru" style="display: none;">Ядерная Ракетная Шахта</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Powerplant">
+                <span class="lang-it">Centrale Elettrica</span>
+                <span class="lang-ru" style="display: none;">Электростанция</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Trainyard">
+                <span class="lang-it">Deposito Ferroviario</span>
+                <span class="lang-ru" style="display: none;">Железнодорожное Депо</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Ferry Terminal">
+                <span class="lang-it">Terminal Traghetti</span>
+                <span class="lang-ru" style="display: none;">Паромный Терминал</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Water Treatment">
+                <span class="lang-it">Impianto di Depurazione</span>
+                <span class="lang-ru" style="display: none;">Водоочистная Станция</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Sphere Tank">
+                <span class="lang-it">Cupola</span>
+                <span class="lang-ru" style="display: none;">купол</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Bandit Town">
+                <span class="lang-it">Città dei Banditi</span>
+                <span class="lang-ru" style="display: none;">Город Бандитов</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Sewer Branch">
+                <span class="lang-it">Ramo Fognario</span>
+                <span class="lang-ru" style="display: none;">Канализация</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Satellite Dish">
+                <span class="lang-it">Antenna Satellitare</span>
+                <span class="lang-ru" style="display: none;">Спутниковая Тарелка</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Outpost">
+                <span class="lang-it">Avamposto</span>
+                <span class="lang-ru" style="display: none;">Аванпост</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Excavator">
+                <span class="lang-it">Escavatore</span>
+                <span class="lang-ru" style="display: none;">Экскаватор</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Large Oilrig">
+                <span class="lang-it">Piattaforma Petrolifera Grande</span>
+                <span class="lang-ru" style="display: none;">Большая Нефтяная Вышка</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Small Oilrig">
+                <span class="lang-it">Piattaforma Petrolifera Piccola</span>
+                <span class="lang-ru" style="display: none;">Малая Нефтяная Вышка</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Arctic Research Base A">
+                <span class="lang-it">Base di Ricerca Artica A</span>
+                <span class="lang-ru" style="display: none;">Арктическая База А</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Radtown">
+                <span class="lang-it">Città Radioattiva</span>
+                <span class="lang-ru" style="display: none;">Радиоактивный Город</span>
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" value="Military Base">
+                <span class="lang-it">Base Militare</span>
+                <span class="lang-ru" style="display: none;">Военная База</span>
+            </label>
+                    </div>
+                    <button class="filter-button" onclick="filterMaps()">
+                        <span class="lang-it">Applica Filtri</span>
+                        <span class="lang-ru" style="display: none;">Применить Фильтры</span>
+                    </button>
+                </div>
+            
+                <script>
+                    function toggleLanguage() {
+                        const italianElements = document.querySelectorAll('.lang-it');
+                        const russianElements = document.querySelectorAll('.lang-ru');
+                        
+                        italianElements.forEach(el => {
+                            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                        });
+                        
+                        russianElements.forEach(el => {
+                            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                        });
+                    }
+            
+                    function filterMaps() {
+                        const checkboxes = document.querySelectorAll('.checkbox-item input[type="checkbox"]:checked');
+                        const selectedFeatures = Array.from(checkboxes).map(cb => cb.value);
+                        
+                        // Se nessun filtro è selezionato, mostra tutte le mappe
+                        if (selectedFeatures.length === 0) {
+                            document.querySelectorAll('.map-card').forEach(card => {
+                                card.classList.remove('hidden');
+                            });
+                            return;
+                        }
+            
+                        document.querySelectorAll('.map-card').forEach(card => {
+                            const cardFeatures = card.getAttribute('data-features').split(',');
+                            const hasAllSelectedFeatures = selectedFeatures.every(feature => 
+                                cardFeatures.includes(feature)
+                            );
+                            
+                            if (hasAllSelectedFeatures) {
+                                card.classList.remove('hidden');
+                            } else {
+                                card.classList.add('hidden');
+                            }
+                        });
+                    }
+            
+                    // Aggiungi l'event listener per il pulsante di filtro
+                    document.querySelector('.filter-button').addEventListener('click', filterMaps);
+                </script>
+            </body>
+            </html>
+            
